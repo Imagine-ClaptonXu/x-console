@@ -1,58 +1,13 @@
-const log = console.log.bind(console)
-const e = className => document.querySelector(className)
-const es = className => document.querySelectorAll(className)
+// ===== 主逻辑
 
-// 生成 16 位的随机字符串
-const getRandomCode = function () {
-	let res = []
-	let arr = []
-	let resStr
-	for (let i = 65; i <= 90; i++) {
-		arr.push(String.fromCharCode(i))
-	}
-	for (let i = 0; i < 10; i++) {
-		arr.push(String(i))
-	}
-	for (let i = 0; i < 16; i++) {
-		let index = Math.floor(Math.random() * arr.length)
-		res.push(arr[index])
-	}
-	resStr = res.join('')
-	return resStr
-}
 
-// 判断类型
-const getType = function (data) {
-	let typeText = Object.prototype.toString.call(data)
-	let map = {
-		'[object String]': 'String',
-		'[object Number]': 'Number',
-		'[object Array]': 'Array',
-		'[object Object]': 'Object',
-		'[object Undefined]': 'Undefined',
-		'[object Null]': 'Null',
-	}
-	let res = map[typeText]
-	return res
-}
-
-// 拿到 △ __proto__: Array(0)
-// XX.prototype 的全部方法
-const getTypeProto = function (type) {
-	let res = ''
-	if (type === 'Array') {
-		res = Object.getOwnPropertyNames(Array.prototype)
-	}
-	else if (type === 'Object') {
-		res = Object.getOwnPropertyNames(Object.prototype)
-	}
-	else if (type === 'String') {
-		res = Object.getOwnPropertyNames(String.prototype)
-	}
-	else if (type === 'Number') {
-		res = Object.getOwnPropertyNames(Number.prototype)
-	}
-	return res
+const autoArr = ['String', 'Number', 'Undefined', 'Null', 'Boolean'] // 常用
+const autoColorMap = { // 颜色
+    'String': 'red',
+    'Number': 'blue',
+    'Undefined': 'gray',
+    'Null': 'gray',
+    'Boolean': 'blue',
 }
 
 // 插入 dom 模板
@@ -112,6 +67,15 @@ const tempCloseHtmlInArray = function (data, type, index, level, key) {
 		`
 		tempHtml += html
 	}
+    // Boolean 蓝色
+	else if (type === 'Boolean') {
+		let html = `
+			<div class='blue shrink0' data-index='${index}'>
+				${data}
+			</div>
+		`
+		tempHtml += html
+	}
 	// objectKey 是特殊的类型
 	// 数组中的元素有字典，没展开的情况下，字典的 key 都是灰色且不带引号的，展开时是紫色的不带引号的
 	else if (type === 'objectKey') {
@@ -137,13 +101,6 @@ const tempCloseHtmlInArray = function (data, type, index, level, key) {
 // length: 7
 // △ [Prototype]]: Array(0)
 const lineHtmlInArray = function (data, type, index, level, key) {
-	let auto = ['String', 'Number', 'Undefined', 'Null'] // 常用
-	let color = { // 颜色
-		'String': 'red',
-		'Number': 'blue',
-		'Undefined': 'gray',
-		'Null': 'gray',
-	}
 	let tempHtml = ''
 	// 数组
 	if (type === 'Array') {
@@ -176,13 +133,13 @@ const lineHtmlInArray = function (data, type, index, level, key) {
 		tempHtml += indexHTML
 		tempHtml += templateHTML(data, type, index, 'isChild')
 	}
-	// 字符串，数字，undefined，null
-	else if (auto.includes(type)) {
+	// 字符串，数字，undefined，null, boolean
+	else if (autoArr.includes(type)) {
 		let html = `
 			<div class='flexBox' data-index='${index}'>
 				<div class='purple'>${index}</div>
 				<div class='maoHao mr8'>:</div>
-				<div class=${color[type]}>${type === 'String' ? '"' : ''}${data}${type === 'String' ? '"' : ''}</div>
+				<div class=${autoColorMap[type]}>${type === 'String' ? '"' : ''}${data}${type === 'String' ? '"' : ''}</div>
 			</div>
 		`
 		tempHtml += html
@@ -265,13 +222,6 @@ const lineHtmlInObject = function (data, type, index) {
 // 第一层的
 // dom 模板
 const templateHTML = function (data, type, index, level, objKey) {
-	let auto = ['String', 'Number', 'Undefined', 'Null'] // 常用
-	let color = { // 颜色
-		'String': 'black',
-		'Number': 'blue',
-		'Undefined': 'gray',
-		'Null': 'gray',
-	}
 	// 右箭头
 	let arrowRightHtml = `<div class='arrow-right'></div>`
 	// 下箭头
@@ -558,9 +508,10 @@ const templateHTML = function (data, type, index, level, objKey) {
 		}
 	}
 	// 字符串，数字，Undefined，Null
-	else if (auto.includes(type)) {
+	else if (autoArr.includes(type)) {
+        // showLog('a') 当只 log 字符串 'a' 的时候，颜色是黑色的，在数组或者字典中才是红色的
 		let html = `
-			<div class='text ${color[type]}'>
+			<div class='text ${type === "String" ? "black" : autoColorMap[type]}'>
 				${data}
 			</div>
 		`
@@ -568,15 +519,6 @@ const templateHTML = function (data, type, index, level, objKey) {
 	}
 
 	return tempHtml
-}
-
-// dom 的展示和隐藏
-const toggleShowHide = function (dom, className) {
-	if (dom.classList.contains(className)) {
-		dom.classList.remove(className)
-	} else {
-		dom.classList.add(className)
-	}
 }
 
 // 绑定点击事件，展开数组和字典
